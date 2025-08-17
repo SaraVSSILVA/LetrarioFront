@@ -63,7 +63,9 @@ const WishlistPage = () => {
     setSearchError('');
     let res;
     try {
-  res = await api.get(`/livro/search/google?q=${encodeURIComponent(search)}`);
+      res = await api.get(
+        `/livro/search/google?q=${encodeURIComponent(search)}`,
+      );
       setSearchResults(res.data);
     } catch (err: any) {
       if (err.response?.status === 404) {

@@ -1,67 +1,67 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import LoginScreen from './pages/login/LoginScreen';
 import Book from './pages/Book';
 import Genre from './pages/Genre';
 import Loan from './pages/Loan';
 import User from './pages/User';
 import WishlistPage from './pages/Wishlist';
-import PrivateRoute from './components/PrivateRoute';
+import ProtectedRoute from './components/ProtectedRoute';
+import RegisterScreen from './pages/register/RegisterScreen';
 
-const App = () => {
+function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/" element={<LoginScreen />} />
+        <Route path="/login" element={<LoginScreen />} />
+        <Route path="/register" element={<RegisterScreen />} />
         <Route
           path="/dashboard"
           element={
-            <PrivateRoute>
+            <ProtectedRoute>
               <Dashboard />
-            </PrivateRoute>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/livros"
           element={
-            <PrivateRoute>
+            <ProtectedRoute>
               <Book />
-            </PrivateRoute>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/generos"
           element={
-            <PrivateRoute>
+            <ProtectedRoute>
               <Genre />
-            </PrivateRoute>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/emprestimos"
           element={
-            <PrivateRoute>
+            <ProtectedRoute>
               <Loan />
-            </PrivateRoute>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/usuarios"
           element={
-            <PrivateRoute>
+            <ProtectedRoute>
               <User />
-            </PrivateRoute>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/desejos"
           element={
-            <PrivateRoute>
+            <ProtectedRoute>
               <WishlistPage />
-            </PrivateRoute>
+            </ProtectedRoute>
           }
         />
       </Routes>

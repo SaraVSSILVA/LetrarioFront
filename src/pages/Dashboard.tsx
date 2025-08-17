@@ -1,120 +1,102 @@
-import { useEffect, useState } from 'react';
-import api from '../services/api';
-import DashboardLayout from '../components/DashboardLayout';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { getUserIdFromToken } from '../utils/auth'; // Importa a função utilitária
 
-const Dashboard = () => {
-  const [dark, setDark] = useState(false);
-  const [stats, setStats] = useState({
-    livros: 0,
-    usuarios: 0,
-    emprestimosAtivos: 0,
-    emprestimosFinalizados: 0,
-  });
-  const [alerts, setAlerts] = useState<
-    { livro: string; usuario: string; data: string }[]
-  >([]);
+const Dashboard: React.FC = () => {
+  const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchUserData = async () => {
+      const userId = getUserIdFromToken();
+      const token = localStorage.getItem('authToken');
+
+      if (!userId || !token) {
+        setLoading(false);
+        setError("Não foi possível obter o ID do usuário. Faça o login novamente.");
+        return;
+      }
+
       try {
-        setLoading(true);
-        setError('');
-        // Example API calls, replace with your endpoints
-        const [livrosRes, usuariosRes, emprestimosRes, alertsRes] =
-          await Promise.all([
-            api.get('/livros/count'),
-            api.get('/usuarios/count'),
-            api.get('/emprestimos/stats'),
-            api.get('/emprestimos/alerts'),
-          ]);
-        setStats({
-          livros: livrosRes.data.count,
-          usuarios: usuariosRes.data.count,
-          emprestimosAtivos: emprestimosRes.data.ativos,
-          emprestimosFinalizados: emprestimosRes.data.finalizados,
+        const config = {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        };
+
+        const userResponse = await axios.get(`${import.meta.env.VITE_API_URL}/usuario/${userId}`, config);
+        const emprestimosResponse = await axios.get(`${import.meta.env.VITE_API_URL}/emprestimo/tomados-por/${userId}`, config);
+        const wishlistResponse = await axios.get(`${import.meta.env.VITE_API_URL}/wishlist/${userId}`, config);
+
+        setUserData({
+          ...userResponse.data,
+          emprestimos: emprestimosResponse.data,
+          wishlist: wishlistResponse.data,
         });
-        setAlerts(alertsRes.data);
-      } catch {
-        setError('Erro ao carregar estatísticas.');
+
+      } catch (err) {
+        setError("Erro ao carregar os dados. Verifique se o token é válido e tente novamente.");
+        console.error("Erro ao buscar dados do usuário:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchStats();
+
+    fetchUserData();
   }, []);
 
+  if (loading) {
+    return <div className="text-white text-center p-8">Carregando dados...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center p-8">{error}</div>;
+  }
+
   return (
-    <div className={dark ? 'dark' : ''}>
-      <DashboardLayout>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Bem-vindo(a) 👋</h1>
-            <p className="text-lg">Aqui está um resumo da sua biblioteca:</p>
-          </div>
-          <button
-            className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-600 dark:bg-yellow-400 dark:text-black transition"
-            onClick={() => setDark((d) => !d)}
-            aria-label="Alternar tema claro/escuro"
-          >
-            {dark ? '🌞 Tema Claro' : '🌙 Tema Escuro'}
-          </button>
-        </div>
-        {loading && <p>Carregando...</p>}
-        {error ? (
-          <div className="text-red-500">
-            {error}
-            <br />
-            <span className="text-gray-700">
-              Verifique se há dados cadastrados ou se a API está disponível.
-            </span>
-          </div>
-        ) : null}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow">
-            <h2 className="text-xl font-semibold">📚 Livros</h2>
-            <p className="mt-2 text-gray-600 dark:text-gray-300">
-              Total cadastrados: {stats.livros}
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow">
-            <h2 className="text-xl font-semibold">👤 Usuários</h2>
-            <p className="mt-2 text-gray-600 dark:text-gray-300">
-              Total: {stats.usuarios}
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow">
-            <h2 className="text-xl font-semibold">🔁 Empréstimos Ativos</h2>
-            <p className="mt-2 text-gray-600 dark:text-gray-300">
-              {stats.emprestimosAtivos}
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow">
-            <h2 className="text-xl font-semibold">
-              ✅ Empréstimos Finalizados
-            </h2>
-            <p className="mt-2 text-gray-600 dark:text-gray-300">
-              {stats.emprestimosFinalizados}
-            </p>
-          </div>
-        </div>
-        {alerts.length > 0 && (
-          <div className="mt-10">
-            <h2 className="text-xl font-bold mb-2 text-red-700 dark:text-yellow-400">
-              ⚠️ Devoluções próximas
-            </h2>
-            <ul className="list-disc ml-6">
-              {alerts.map((a, i) => (
-                <li key={i} className="text-red-600 dark:text-yellow-300">
-                  Livro: <b>{a.livro}</b> | Usuário: <b>{a.usuario}</b> | Data:{' '}
-                  <b>{a.data}</b>
-                </li>
-              ))}
-            </ul>
-          </div>
+    <div className="flex flex-col items-center justify-start min-h-screen bg-gray-900 text-white p-8">
+      <h1 className="text-3xl font-bold mb-4">Olá, {userData?.nome}!</h1>
+      <p className="mb-8 text-gray-400">Bem-vindo(a) de volta ao Letrário.</p>
+      
+      <div className="w-full max-w-2xl bg-gray-800 p-6 rounded-lg shadow-2xl mb-8">
+        <h2 className="text-2xl font-semibold mb-4 border-b pb-2 border-gray-600">Seus Empréstimos</h2>
+        {userData?.emprestimos?.length > 0 ? (
+          <ul className="space-y-4">
+            {userData.emprestimos.map((loan: any) => (
+              <li key={loan.id} className="p-4 bg-gray-700 rounded-lg flex justify-between items-center">
+                <span>Livro: {loan.livro?.titulo}</span>
+                <span className={`font-bold ${loan.dataDevolucao ? 'text-green-400' : 'text-yellow-400'}`}>
+                  {loan.dataDevolucao ? 'Devolvido' : 'Em andamento'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-500">Você não possui empréstimos registrados.</p>
         )}
-      </DashboardLayout>
+      </div>
+
+      <div className="w-full max-w-2xl bg-gray-800 p-6 rounded-lg shadow-2xl">
+        <h2 className="text-2xl font-semibold mb-4 border-b pb-2 border-gray-600">Sua Lista de Desejos</h2>
+        {userData?.wishlist?.livros?.length > 0 ? (
+          <ul className="space-y-4">
+            {userData.wishlist.livros.map((book: any) => (
+              <li key={book.id} className="p-4 bg-gray-700 rounded-lg flex items-center gap-4">
+                <img src={book.capaUrl || 'https://placehold.co/60x90/5A67D8/FFFFFF?text=Sem+Capa'} alt={`Capa de ${book.titulo}`} className="w-12 h-20 object-cover rounded shadow-md" />
+                <div>
+                  <h3 className="text-lg font-bold">{book.titulo}</h3>
+                  <p className="text-sm text-gray-400">{book.autor}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-500">Sua lista de desejos está vazia.</p>
+        )}
+      </div>
+
     </div>
   );
 };

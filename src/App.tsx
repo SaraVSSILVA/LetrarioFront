@@ -1,21 +1,18 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
-import LoginScreen from './pages/login/LoginScreen';
-import Book from './pages/Book';
-import Genre from './pages/Genre';
-import Loan from './pages/Loan';
-import User from './pages/User';
-import WishlistPage from './pages/Wishlist';
+import Dashboard from './screens/Dashboard';
+import LoginScreen from './screens/login/LoginScreen';
+import Genre from './screens/Genre';
+import Loan from './screens/Loan';
+import User from './screens/User';
+import WishlistPage from './screens/Wishlist';
 import ProtectedRoute from './components/ProtectedRoute';
-import RegisterScreen from './pages/register/RegisterScreen';
-
+import BookSearch from './screens/book/BookSearch';
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LoginScreen />} />
         <Route path="/login" element={<LoginScreen />} />
-        <Route path="/register" element={<RegisterScreen />} />
         <Route
           path="/dashboard"
           element={
@@ -28,7 +25,7 @@ function App() {
           path="/livros"
           element={
             <ProtectedRoute>
-              <Book />
+              <BookSearch />
             </ProtectedRoute>
           }
         />
